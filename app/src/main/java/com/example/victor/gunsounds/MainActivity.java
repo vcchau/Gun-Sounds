@@ -15,16 +15,24 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private SensorManager manager;
     private Sensor accelerometer;
-    private Button button;
+    private ImageButton button;
     private SoundPool soundPool;
     private int sound1;
     private int numGuns = 1;
+    private TextView xView;
+    private TextView yView;
+    private TextView zView;
+    private float previousY;
+    private float previousX;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +40,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
         // Find manual fire button
-        button = findViewById(R.id.button2);
+        button = findViewById(R.id.imageButton);
 
         // Initialize SensorManager and accelerometer
         manager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
         accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+
 
         // Create soundpool based on Android version
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -54,11 +63,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Load sounds into sound pool
         sound1 = soundPool.load(this, R.raw.gunshot_9_mm, 1);
+
+        xView = findViewById(R.id.textView);
+        yView = findViewById(R.id.textView2);
+        zView = findViewById(R.id.textView3);
+
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        fire();
+        /* X and Y directional changes
+        *  x < 0 tilted right
+        *  x > 0 tilted left
+        *  y < 0 tilted up
+        *  y > 0 tilted down
+        *
+        *  Only fire upon one directional change, either up or right */
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        xView.setText("X: " + x);
+        yView.setText("Y: " + y);
+        zView.setText("Z: " + z);
+
+        // Check phone's previous orientation before firing
+        if (y > 3 && (y - previousY) > 1) {
+            fire();
+        }
+        else if (x > 9.5 && (previousX - x) > 1) {
+            fire();
+        }
+        previousY = y;
+        previousX = x;
     }
 
     // On click firing
@@ -74,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
