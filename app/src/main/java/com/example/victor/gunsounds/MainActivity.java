@@ -82,10 +82,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (accelerometer != null) {
             manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
             tiltFireOn = true;
+
         }
         else {
             tiltFireOn = false;
             toggleButton.setEnabled(false);
+
         }
 
         // Set toggle button to match
