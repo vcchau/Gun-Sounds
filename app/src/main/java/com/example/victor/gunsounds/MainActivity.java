@@ -14,9 +14,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -32,12 +37,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView zView;
     private float previousY;
     private float previousX;
+    private boolean loaded;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Find manual fire button
         button = findViewById(R.id.imageButton);
@@ -45,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Initialize SensorManager and accelerometer
         manager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
         accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
 
 
         // Create soundpool based on Android version
@@ -68,32 +76,47 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         yView = findViewById(R.id.textView2);
         zView = findViewById(R.id.textView3);
 
+        // Load the gun
+        loaded = true;
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        /* X and Y directional changes
-        *  x < 0 tilted right
-        *  x > 0 tilted left
-        *  y < 0 tilted up
-        *  y > 0 tilted down
+        /* X and Z directional changes
+        *  -2 < x < 2
+        *  Phone placed horizontal with some room for error
+        *  ______________
         *
-        *  Only fire upon one directional change, either up or right */
+        *  -3 < z < 3
+        *  Phone placed vertical up/down with some room for error
+        *     |
+        *     |
+        *     |
+        *     |
+        *
+        *  Fire based on phone's orientation */
         float x = event.values[0];
         float y = event.values[1];
         float z = event.values[2];
 
-        xView.setText("X: " + x);
-        yView.setText("Y: " + y);
-        zView.setText("Z: " + z);
+//        xView.setText("X: " + x);
+//        yView.setText("Y: " + y);
+//        zView.setText("Z: " + z);
 
-        // Check phone's previous orientation before firing
-        if (y > 3 && (y - previousY) > 1) {
-            fire();
+        // Horizontal firing
+        if (-2 < x && x < 1.5) {
+            // Check phone's previous orientation before firing
+            if ((y > previousY) && (y - previousY > 2)) {
+                fire();
+            }
         }
-        else if (x > 9.5 && (previousX - x) > 1) {
-            fire();
+        // Phone sideways firing
+        else if (-3 < z && z < 3) {
+            if (previousX > x && previousX - x > 2) {
+                fire();
+            }
         }
+
         previousY = y;
         previousX = x;
     }
@@ -105,7 +128,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     // On tilt firing
     public void fire() {
-        soundPool.play(sound1, 1, 1, 0, 0, 1);
+        if (loaded) {
+            soundPool.play(sound1, 1, 1, 0, 0, 1);
+            loaded = false;
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    loaded = true;
+                }
+            }, 150);
+            // Replace 150 with a variable denoting a certain weapon's firing rate
+        }
     }
 
     @Override
