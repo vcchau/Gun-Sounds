@@ -14,10 +14,12 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.Timer;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     };
 
     private int[] sounds = new int[guns.length];
+    private int currentGun;
 
 
 //    private TextView xView;
@@ -107,13 +110,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         spinner.setAdapter(adapter);
         spinner.setVisibility(View.VISIBLE);
 
+        // Change the image of the gun and the sound played when firing when selecting new gun
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentGun = position;
+                imageButton.setImageResource(images[position]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         // Load sounds into sound pool
         sounds[0] = soundPool.load(this, R.raw.gunshot_9_mm, 1);
+        sounds[1] = soundPool.load(this, R.raw.finger_gun_pew, 1);
 
         // Set image button
         imageButton = findViewById(R.id.imageButton);
         imageButton.setImageResource(R.drawable.handgun_9mm);
+
+        currentGun = 0;
 
 //        xView = findViewById(R.id.textView);
 //        yView = findViewById(R.id.textView2);
@@ -169,13 +188,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     // On click firing
     public void fire(View view) {
-        soundPool.play(sounds[0], 1, 1, 0, 0, 1);
+        soundPool.play(sounds[currentGun], 1, 1, 0, 0, 1);
     }
 
     // On tilt firing
     public void fire() {
         if (loaded) {
-            soundPool.play(sounds[0], 1, 1, 0, 0, 1);
+            soundPool.play(sounds[currentGun], 1, 1, 0, 0, 1);
             loaded = false;
             new Timer().schedule(new TimerTask() {
                 @Override
