@@ -14,7 +14,9 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -28,15 +30,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor accelerometer;
     private ToggleButton toggleButton;
     private SoundPool soundPool;
-    private int numGuns = 1;
-    private int[] sounds = new int[numGuns];
-    private TextView xView;
-    private TextView yView;
-    private TextView zView;
+
     private float previousY;
     private float previousX;
     private boolean loaded;
     private boolean tiltFireOn;
+    private Spinner spinner;
+    private ArrayAdapter<String> adapter;
+    private ImageButton imageButton;
+
+    // Guns and sounds
+    private String[] guns = {
+            "9mm Handgun",
+            "Finger Gun"
+    };
+
+    private int[] images = {
+            R.drawable.handgun_9mm,
+            R.drawable.finger_gun
+    };
+
+    private int[] sounds = new int[guns.length];
+
+
+//    private TextView xView;
+//    private TextView yView;
+//    private TextView zView;
 
 
     @Override
@@ -76,14 +95,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build();
 
-            soundPool = new SoundPool.Builder().setMaxStreams(numGuns).build();
+            soundPool = new SoundPool.Builder().setMaxStreams(guns.length).build();
         }
         else {
-            soundPool = new SoundPool(numGuns, AudioManager.STREAM_MUSIC, 0);
+            soundPool = new SoundPool(guns.length, AudioManager.STREAM_MUSIC, 0);
         }
+
+        // Identify and populate spinner
+        spinner = findViewById(R.id.spinner);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, guns);
+        spinner.setAdapter(adapter);
+        spinner.setVisibility(View.VISIBLE);
+
 
         // Load sounds into sound pool
         sounds[0] = soundPool.load(this, R.raw.gunshot_9_mm, 1);
+
+        // Set image button
+        imageButton = findViewById(R.id.imageButton);
+        imageButton.setImageResource(R.drawable.handgun_9mm);
 
 //        xView = findViewById(R.id.textView);
 //        yView = findViewById(R.id.textView2);
@@ -112,10 +142,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
-
-//            xView.setText("X: " + x);
-//            yView.setText("Y: " + y);
-//            zView.setText("Z: " + z);
 
             // Horizontal firing
             if (-2 < x && x < 1.5) {
