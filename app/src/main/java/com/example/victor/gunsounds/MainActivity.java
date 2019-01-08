@@ -120,13 +120,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             // Horizontal firing
             if (-2 < x && x < 1.5) {
                 // Check phone's previous orientation before firing
-                if ((y > 0) && (y - previousY > 2)) {
+                if ((y > 0) && (y - previousY > 1.5)) {
                     fire();
                 }
             }
             // Phone sideways firing
             else if (-3 < z && z < 3) {
-                if ((y - previousY > 2)) {
+                if (x < 9 && previousX - x > 2) {
                     fire();
                 }
             }
